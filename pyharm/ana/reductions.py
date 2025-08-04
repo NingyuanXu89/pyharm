@@ -95,7 +95,7 @@ def flatten_xy(dump, var, at=None, sum=False):
 
     :param at: which rank in X2 to take data from, default N2//2
     :param sum: whether to sum all ranks. Overrides 'at'.
-    """
+    """ 
     if sum:
         if isinstance(var, str):
             var = dump[var]
@@ -106,7 +106,10 @@ def flatten_xy(dump, var, at=None, sum=False):
         if isinstance(var, str):
             return np.squeeze(dump[:, at, :][var])
         else:
-            return var[:, at, :]
+            if len(var.shape) == 3:
+                return var[:, at, :]
+            elif var.shape == (dump['nx1'], dump['nx2']):
+                return var
 
 def wrap(x):
     """Append the first rank in axis 1 again after the last rank in axis 1

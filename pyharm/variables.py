@@ -58,19 +58,19 @@ fns_dict = {# 4-vectors
             # Versions in base coordinates
             # these use the reverse of dxdX/dXdx as they transform *back*
             'ucon_base': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX"], dump['ucon']),
-            'ucov_base': lambda dump: np.einsum("ij...,j...->i...", dump["dXdx"], dump['ucov']),
+            'ucov_base': lambda dump: np.einsum("ij...,i...->j...", dump["dXdx"], dump['ucov']),
             'bcon_base': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX"], dump['bcon']),
-            'bcov_base': lambda dump: np.einsum("ij...,j...->i...", dump["dXdx"], dump['bcov']),
+            'bcov_base': lambda dump: np.einsum("ij...,i...->j...", dump["dXdx"], dump['bcov']),
             # Versions in Cartesian
-            'ucon_cart': lambda dump: np.einsum("ij...,j...->i...", dump["dXdx_cart"], dump['ucon_base']),
-            'ucov_cart': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX_cart"], dump['ucov_base']),
-            'bcon_cart': lambda dump: np.einsum("ij...,j...->i...", dump["dXdx_cart"], dump['bcon_base']),
-            'bcov_cart': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX_cart"], dump['bcov_base']),
+            'ucon_cart': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX_cart"], dump['ucon_base']),
+            'ucov_cart': lambda dump: np.einsum("ij...,i...->j...", dump["dXdx_cart"], dump['ucov_base']),
+            'bcon_cart': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX_cart"], dump['bcon_base']),
+            'bcov_cart': lambda dump: np.einsum("ij...,i...->j...", dump["dXdx_cart"], dump['bcov_base']),
             # Versions in BL
             'ucon_bl': lambda dump: np.einsum("ij...,j...->i...", dump['dxdX_bl'], dump['ucon_base']),
-            'ucov_bl': lambda dump: np.einsum("ij...,j...->i...", dump['dXdx_bl'], dump['ucov_base']),
+            'ucov_bl': lambda dump: np.einsum("ij...,i...->j...", dump['dXdx_bl'], dump['ucov_base']),
             'bcon_bl': lambda dump: np.einsum("ij...,j...->i...", dump['dxdX_bl'], dump['bcon_base']),
-            'bcov_bl': lambda dump: np.einsum("ij...,j...->i...", dump['dXdx_bl'], dump['bcov_base']),
+            'bcov_bl': lambda dump: np.einsum("ij...,i...->j...", dump['dXdx_bl'], dump['bcov_base']),
             # Renaming
             'u': lambda dump: dump['UU'],
             'p': lambda dump: dump['Pg'],

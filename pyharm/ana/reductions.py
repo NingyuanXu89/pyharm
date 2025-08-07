@@ -232,7 +232,7 @@ def sphere_sum(dump, var, r_slice=None, i_slice=None, th_slice=None, j_slice=Non
      
     integrand = var * dump['gdet'][i_slice, j_slice, :] * dump['dx1'] * dump['dx2'] * dump['dx3']
     if mask is not None:
-        integrand *= mask
+        integrand *= mask[i_slice, j_slice, :]
 
     return np.sum(integrand)
 

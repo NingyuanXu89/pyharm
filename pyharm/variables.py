@@ -104,6 +104,7 @@ fns_dict = {# 4-vectors
             'FL': lambda dump: T_mixed(dump, 1, 3),
             'FL_EM': lambda dump: TEM_mixed(dump, 1, 3),
             'FL_Fl': lambda dump: TFl_mixed(dump, 1, 3),
+            'AM': lambda dump: T_mixed(dump, 0, 3),
             # Energy current
             'JE0': lambda dump: -T_mixed(dump, 0, 0),
             'JE1': lambda dump: -T_mixed(dump, 1, 0),

@@ -55,13 +55,13 @@ fns_dict = {# 4-vectors
             'ucov': lambda dump: dump.grid.lower_grid(dump['ucon']),
             'bcon': lambda dump: bcon_calc(dump),
             'bcov': lambda dump: dump.grid.lower_grid(dump['bcon']),
-            # Versions in base coordinates
+            # Versions in base coordinates (Spherical KS)
             # these use the reverse of dxdX/dXdx as they transform *back*
             'ucon_base': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX"], dump['ucon']),
             'ucov_base': lambda dump: np.einsum("ij...,i...->j...", dump["dXdx"], dump['ucov']),
             'bcon_base': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX"], dump['bcon']),
             'bcov_base': lambda dump: np.einsum("ij...,i...->j...", dump["dXdx"], dump['bcov']),
-            # Versions in Cartesian
+            # Versions in Cartesian KS
             'ucon_cart': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX_cart"], dump['ucon_base']),
             'ucov_cart': lambda dump: np.einsum("ij...,i...->j...", dump["dXdx_cart"], dump['ucov_base']),
             'bcon_cart': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX_cart"], dump['bcon_base']),
@@ -71,6 +71,12 @@ fns_dict = {# 4-vectors
             'ucov_bl': lambda dump: np.einsum("ij...,i...->j...", dump['dXdx_bl'], dump['ucov_base']),
             'bcon_bl': lambda dump: np.einsum("ij...,j...->i...", dump['dxdX_bl'], dump['bcon_base']),
             'bcov_bl': lambda dump: np.einsum("ij...,i...->j...", dump['dXdx_bl'], dump['bcov_base']),
+            # Version in Locally Minkowski Space from Cartesian KS
+            'g_mink': lambda dump: mink_metric(),
+            'ucon_flat': lambda dump: cart2mink(dump, 'ucon_cart'),
+            'ucov_flat': lambda dump: np.einsum("ij,j...->i...", dump['g_mink'], dump['ucon_flat']),
+            'bcon_flat': lambda dump: cart2mink(dump, 'bcon_cart'),
+            'bcov_flat': lambda dump: np.einsum("ij,j...->i...", dump['g_mink'], dump['bcon_flat']),
             # Renaming
             'u': lambda dump: dump['UU'],
             'p': lambda dump: dump['Pg'],
@@ -180,6 +186,55 @@ def bcon_calc(dump):
                         / dump['ucon'][0]
 
     return bcon
+
+
+def mink_metric():
+    """Calculate the 4*4 Minkowski Metric"""
+    metric = np.identity(4)
+    metric[0,0] = -1
+
+    return metric
+
+
+# Also apply to tensors?
+def cart2mink(dump, var):
+    """Transform contravariant vectors from Cartesian KS to locally Minkowski
+       From coordinate basis to orthonormal basis, Eq.25 in White et al. 2016
+       :param var: either ucon_cart or bcon_cart
+    """ 
+    if var not in ("bcon_cart", "ucon_cart"):
+        raise ValueError("Can only be applied to magnetic or velocity contravariant vector")
+     
+    g_ks = np.einsum("am...,bn...,mn...->ab...", dump['dxdX'], dump['dxdX'], dump['gcon']) # contravariant metric in Spherical KS
+    g_cart = np.einsum("am...,bn...,mn...->ab...", dump['dxdX_cart'], dump['dxdX_cart'], g_ks) # contravariant metric in Cartesian KS
+    g_cart_cov = np.einsum("...ij->ij...", np.linalg.inv(np.einsum("ij...->...ij", g_cart))) # covariant metric in Cartesian KS
+    
+    g00, g01, g02, g03 = g_cart[0, 0], g_cart[0, 1], g_cart[0, 2], g_cart[0, 3]
+    g11, g12, g13 = g_cart[1, 1], g_cart[1, 2], g_cart[1, 3]
+    g22, g23, g33 = g_cart_cov[2, 2], g_cart_cov[2, 3], g_cart_cov[3, 3]
+
+    # define coefficients
+    A = -1/np.sqrt(-g00)
+    B = 1/np.sqrt(g00*(g00*g11-g01*g01))
+    C = 1/np.sqrt(g33)
+    D = 1/np.sqrt(g33*(g22*g33-g23*g23))
+    E = g01*g12 - g11*g02
+    F = g01*g02 - g00*g12
+    G = g01*g13 - g11*g03
+    H = g01*g03 - g00*g13
+ 
+    # build the transformation matrix
+    zero = np.zeros(g00.shape)
+    M = np.stack([
+        np.stack([-A, zero, zero, zero], axis=0),
+        np.stack([B*g01, -B*g00, zero, zero], axis=0),
+        np.stack([B*B*E*g00/D/g33, B*B*F*g00/D/g33, 1/D/g33, zero], axis=0),
+        np.stack([B*B*g00*(G+E*g23/g33)/C, B*B*g00*(H+F*g23/g33)/C, g23/g33/C, 1/C], axis=0)
+    ], axis=0)
+
+    # get the contravariant vectors in the locally Minkowski space
+    return np.einsum("ij...,j...->i...", M, dump[var])
+
 
 # These are separated because raising/lowering is slow
 def T_con(dump, i, j):

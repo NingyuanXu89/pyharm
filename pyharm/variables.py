@@ -50,7 +50,7 @@ import matplotlib.pyplot as plt
 # Define a dict of names, coupled with the functions required to obtain their variables.
 # That way, we only need to specify lists and final operations in eht_analysis,
 # AND don't need to cart all these things around in memory
-fns_dict = {# 4-vectors
+fns_dict = {# 4-vectors in native coordinates (FMKS)
             'ucon': lambda dump: ucon_calc(dump),
             'ucov': lambda dump: dump.grid.lower_grid(dump['ucon']),
             'bcon': lambda dump: bcon_calc(dump),
@@ -77,6 +77,10 @@ fns_dict = {# 4-vectors
             'ucov_flat': lambda dump: np.einsum("ij,j...->i...", dump['g_mink'], dump['ucon_flat']),
             'bcon_flat': lambda dump: cart2mink(dump, 'bcon_cart'),
             'bcov_flat': lambda dump: np.einsum("ij,j...->i...", dump['g_mink'], dump['bcon_flat']),
+            # Magnetic 3-vectors in Cartesian, Cylindrical, and Spherical Coordinates, Physical Fields Measured by An Eulerian Observer
+            'B_cart3': lambda dump: physicalB(dump, 'cart'),
+            'B_cylin3': lambda dump: physicalB(dump, 'cylin'),
+            'B_sph3': lambda dump: physicalB(dump, 'sph'),
             # Renaming
             'u': lambda dump: dump['UU'],
             'p': lambda dump: dump['Pg'],
@@ -202,7 +206,7 @@ def cart2mink(dump, var):
        From coordinate basis to orthonormal basis, Eq.25 in White et al. 2016
        :param var: either ucon_cart or bcon_cart
     """ 
-    if var not in ("bcon_cart", "ucon_cart"):
+    if var not in ('bcon_cart', 'ucon_cart'):
         raise ValueError("Can only be applied to magnetic or velocity contravariant vector")
      
     g_ks = np.einsum("am...,bn...,mn...->ab...", dump['dxdX'], dump['dxdX'], dump['gcon']) # contravariant metric in Spherical KS
@@ -234,6 +238,31 @@ def cart2mink(dump, var):
 
     # get the contravariant vectors in the locally Minkowski space
     return np.einsum("ij...,j...->i...", M, dump[var])
+
+def physicalB(dump, coord):
+"""Transform magnetic 4-vectors to 3-vector in a given coordinate"""
+Bx = dump['bcon_flat'][1,...]*dump['ucon_flat'][0,...] - dump['bcon_flat'][0,...]*dump['ucon_flat'][1,...]
+By = dump['bcon_flat'][2,...]*dump['ucon_flat'][0,...] - dump['bcon_flat'][0,...]*dump['ucon_flat'][2,...]
+Bz = dump['bcon_flat'][3,...]*dump['ucon_flat'][0,...] - dump['bcon_flat'][0,...]*dump['ucon_flat'][3,...]
+
+if coord == 'cart':
+    return np.stack([Bx, By, Bz], axis=0)
+ 
+elif coord == 'cylin':
+    phi = dump.grid.coords.phi(dump.grid.coord_all())
+    Br = Bx*np.cos(phi) + By*np.sin(phi)
+    Bphi = -Bx*np.sin(phi) + By*np.cos(phi)
+    return np.stack([Br, Bphi, Bz], axis=0)
+ 
+elif coord == 'sph':
+    r, th, phi = dump.grid.coords.ks_coord(dump.grid.coord_all())
+    Br = Bx * (np.sin(th) * np.cos(phi)) + By * (np.sin(th) * np.sin(phi)) + Bz * np.cos(th)
+    Bth = Bx * (np.cos(th) * np.cos(phi)) + By * (np.cos(th) * np.sin(phi)) - Bz * np.sin(th)
+    Bphi = -Bx * np.sin(phi) + By * np.cos(phi)
+    return np.stack([Br, Bth, Bphi], axis=0)
+    
+else:
+    raise ValueError("Currently only support 3D Cartesian, Cylindrical, and Spherical Coordinates")
 
 
 # These are separated because raising/lowering is slow

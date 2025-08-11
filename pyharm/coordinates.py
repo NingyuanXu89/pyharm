@@ -222,7 +222,6 @@ class CoordinateSystem(object):
     def lapse(self, X):
         return 1./np.sqrt(-self.gcon(X)[0,0])
 
-    # TODO Einsum this too
     def conn(self, x, delta=1e-5):
         r"""Calculate all connection coefficients :math:`\Gamma^{i}_{j, k}`.
         Returns a 3+N dimensional array conn[i,j,k,...]
@@ -257,6 +256,40 @@ class CoordinateSystem(object):
                     for kap in range(4):
                         conn[lam, nu, mu] += gcon[lam, kap] * tmp[kap, nu, mu]
         return conn
+
+    # def conn(self, x, delta=1e-5):
+    #     r"""Calculate all connection coefficients Γ^lam_{nu mu}.
+    #     Returns an array with shape (4,4,4, *x.shape[1:]) ordered as [lam, nu, mu, ...].
+    #     """
+    #     # conn_d will temporarily store metric partials: d_{ab,mu} = ∂_mu g_{ab}
+    #     conn_d = np.zeros((4, 4, 4, *x.shape[1:]), dtype=float)
+    
+    #     # Compute metric derivatives by central finite differences
+    #     for mu in range(4):
+    #         xh = x.copy(); xl = x.copy()
+    #         xh[mu] += delta
+    #         xl[mu] -= delta
+    #         gh = self.gcov(xh)              # shape (4,4, *grid)
+    #         gl = self.gcov(xl)              # shape (4,4, *grid)
+    #         denom = xh[mu] - xl[mu]         # shape (*grid)
+    #         conn_d[:, :, mu] = (gh - gl) / denom
+    
+    #     # Build Γ_{lam nu mu} = 1/2 ( ∂_nu g_{lam mu} + ∂_mu g_{lam nu} - ∂_lam g_{nu mu} )
+    #     # conn_d indices are (lam, nu, mu) = (lam, second-metric-index, derivative-index)
+    #     #   term1: ∂_nu g_{lam mu} == conn_d[lam, mu, nu] -> transpose (0,2,1,...)
+    #     term1 = np.einsum('lnm...->lmn...', conn_d)
+    #     #   term2: ∂_mu g_{lam nu} == conn_d[lam, nu, mu] -> already in [l,n,m,...] order
+    #     term2 = conn_d
+    #     #   term3: ∂_lam g_{nu mu} == conn_d[nu, mu, lam] -> permute (n,m,l,...) -> (l,n,m,...) 
+    #     term3 = np.einsum('lnm...->nml...', conn_d)
+    
+    #     tmp = 0.5 * (term1 + term2 - term3)   # this is Γ_{lam nu mu}
+    
+    #     # Raise the first index with g^{lam kap}: Γ^lam_{nu mu} = g^{lam kap} Γ_{kap nu mu}
+    #     gcon = self.gcon(x)                    # shape (4,4,*grid), indices (lam, kap, ...)
+    #     conn = np.einsum('lk...,knm...->lnm...', gcon, tmp)
+    
+    #     return conn
 
     # Transformation matrices are the other system-specific piece
     def dxdX(self, x):

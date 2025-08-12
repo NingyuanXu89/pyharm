@@ -240,29 +240,29 @@ def cart2mink(dump, var):
     return np.einsum("ij...,j...->i...", M, dump[var])
 
 def physicalB(dump, coord):
-"""Transform magnetic 4-vectors to 3-vector in a given coordinate"""
-Bx = dump['bcon_flat'][1,...]*dump['ucon_flat'][0,...] - dump['bcon_flat'][0,...]*dump['ucon_flat'][1,...]
-By = dump['bcon_flat'][2,...]*dump['ucon_flat'][0,...] - dump['bcon_flat'][0,...]*dump['ucon_flat'][2,...]
-Bz = dump['bcon_flat'][3,...]*dump['ucon_flat'][0,...] - dump['bcon_flat'][0,...]*dump['ucon_flat'][3,...]
-
-if coord == 'cart':
-    return np.stack([Bx, By, Bz], axis=0)
- 
-elif coord == 'cylin':
-    phi = dump.grid.coords.phi(dump.grid.coord_all())
-    Br = Bx*np.cos(phi) + By*np.sin(phi)
-    Bphi = -Bx*np.sin(phi) + By*np.cos(phi)
-    return np.stack([Br, Bphi, Bz], axis=0)
- 
-elif coord == 'sph':
-    r, th, phi = dump.grid.coords.ks_coord(dump.grid.coord_all())
-    Br = Bx * (np.sin(th) * np.cos(phi)) + By * (np.sin(th) * np.sin(phi)) + Bz * np.cos(th)
-    Bth = Bx * (np.cos(th) * np.cos(phi)) + By * (np.cos(th) * np.sin(phi)) - Bz * np.sin(th)
-    Bphi = -Bx * np.sin(phi) + By * np.cos(phi)
-    return np.stack([Br, Bth, Bphi], axis=0)
+    """Transform magnetic 4-vectors to 3-vector in a given coordinate"""
+    Bx = dump['bcon_flat'][1,...]*dump['ucon_flat'][0,...] - dump['bcon_flat'][0,...]*dump['ucon_flat'][1,...]
+    By = dump['bcon_flat'][2,...]*dump['ucon_flat'][0,...] - dump['bcon_flat'][0,...]*dump['ucon_flat'][2,...]
+    Bz = dump['bcon_flat'][3,...]*dump['ucon_flat'][0,...] - dump['bcon_flat'][0,...]*dump['ucon_flat'][3,...]
     
-else:
-    raise ValueError("Currently only support 3D Cartesian, Cylindrical, and Spherical Coordinates")
+    if coord == 'cart':
+        return np.stack([Bx, By, Bz], axis=0)
+     
+    elif coord == 'cylin':
+        phi = dump.grid.coords.phi(dump.grid.coord_all())
+        Br = Bx*np.cos(phi) + By*np.sin(phi)
+        Bphi = -Bx*np.sin(phi) + By*np.cos(phi)
+        return np.stack([Br, Bphi, Bz], axis=0)
+     
+    elif coord == 'sph':
+        r, th, phi = dump.grid.coords.ks_coord(dump.grid.coord_all())
+        Br = Bx * (np.sin(th) * np.cos(phi)) + By * (np.sin(th) * np.sin(phi)) + Bz * np.cos(th)
+        Bth = Bx * (np.cos(th) * np.cos(phi)) + By * (np.cos(th) * np.sin(phi)) - Bz * np.sin(th)
+        Bphi = -Bx * np.sin(phi) + By * np.cos(phi)
+        return np.stack([Br, Bth, Bphi], axis=0)
+        
+    else:
+        raise ValueError("Currently only support 3D Cartesian, Cylindrical, and Spherical Coordinates")
 
 
 # These are separated because raising/lowering is slow

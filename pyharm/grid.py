@@ -621,7 +621,7 @@ class Grid:
             return self.NTOT[int(key[-1:])]
         elif key in ['dx1', 'dx2', 'dx3']:
             return self.dx[int(key[-1:])]
-        elif key in ['r', 'th', 'dxdX', 'dXdx', 'dXdx_cart', 'dxdX_cart',
+        elif key in ['r', 'th', 'dxdX', 'dXdx', 
                      'dXdx_bl', 'dxdX_bl', 'gcon_ks', 'gcov_ks', 'gcon_bl', 'gcov_bl',
                      'delta', 'sigma', 'aa', 'gcon', 'gcov', 'gdet', 'lapse', 'conn']:
             # These keys are symmetric in phi, so we cache/return "2D" versions,

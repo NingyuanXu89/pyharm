@@ -62,6 +62,8 @@ fns_dict = {# 4-vectors in native coordinates (FMKS)
             'bcon_base': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX"], dump['bcon']),
             'bcov_base': lambda dump: np.einsum("ij...,i...->j...", dump["dXdx"], dump['bcov']),
             # Versions in Cartesian KS
+            'dxdX_cart': lambda dump: dump.grid.coords.dxdX_cart(dump.grid.coord_all()),
+            'dXdx_cart': lambda dump: dump.grid.coords.dXdx_cart(dump.grid.coord_all()),
             'ucon_cart': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX_cart"], dump['ucon_base']),
             'ucov_cart': lambda dump: np.einsum("ij...,i...->j...", dump["dXdx_cart"], dump['ucov_base']),
             'bcon_cart': lambda dump: np.einsum("ij...,j...->i...", dump["dxdX_cart"], dump['bcon_base']),

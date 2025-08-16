@@ -73,7 +73,7 @@ fns_dict = {# 4-vectors in native coordinates (FMKS)
             'ucov_bl': lambda dump: np.einsum("ij...,i...->j...", dump['dXdx_bl'], dump['ucov_base']),
             'bcon_bl': lambda dump: np.einsum("ij...,j...->i...", dump['dxdX_bl'], dump['bcon_base']),
             'bcov_bl': lambda dump: np.einsum("ij...,i...->j...", dump['dXdx_bl'], dump['bcov_base']),
-            # Version in Locally Minkowski Space from Cartesian KS
+            # Version in Locally Minkowski Space from Cartesian KS, Components are in Orthonormal Basis
             'g_mink': lambda dump: mink_metric(),
             'ucon_flat': lambda dump: cart2mink(dump, 'ucon_cart'),
             'ucov_flat': lambda dump: np.einsum("ij,j...->i...", dump['g_mink'], dump['ucon_flat']),
@@ -211,7 +211,7 @@ def cart2mink(dump, var):
     if var not in ('bcon_cart', 'ucon_cart'):
         raise ValueError("Can only be applied to magnetic or velocity contravariant vector")
      
-    g_ks = np.einsum("am...,bn...,mn...->ab...", dump['dxdX'], dump['dxdX'], dump['gcon']) # contravariant metric in Spherical KS
+    g_ks = dump['gcon_ks'] # contravariant metric in Spherical KS
     g_cart = np.einsum("am...,bn...,mn...->ab...", dump['dxdX_cart'], dump['dxdX_cart'], g_ks) # contravariant metric in Cartesian KS
     g_cart_cov = np.einsum("...ij->ij...", np.linalg.inv(np.einsum("ij...->...ij", g_cart))) # covariant metric in Cartesian KS
     
@@ -242,7 +242,7 @@ def cart2mink(dump, var):
     return np.einsum("ij...,j...->i...", M, dump[var])
 
 def physicalB(dump, coord):
-    """Transform magnetic 4-vectors to 3-vector in a given coordinate"""
+    """Transform magnetic 4-vectors to Eulerian 3-vector in a given coordinate"""
     Bx = dump['bcon_flat'][1,...]*dump['ucon_flat'][0,...] - dump['bcon_flat'][0,...]*dump['ucon_flat'][1,...]
     By = dump['bcon_flat'][2,...]*dump['ucon_flat'][0,...] - dump['bcon_flat'][0,...]*dump['ucon_flat'][2,...]
     Bz = dump['bcon_flat'][3,...]*dump['ucon_flat'][0,...] - dump['bcon_flat'][0,...]*dump['ucon_flat'][3,...]

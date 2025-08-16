@@ -32,7 +32,9 @@ __license__ = """
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-from scipy.integrate import trapz
+# Only work for Scipy version <= 1.12
+# from scipy.integrate import trapz
+from numpy import trapz
 import numpy.linalg as la
 
 from matplotlib.patches import Circle
